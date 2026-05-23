@@ -1,5 +1,6 @@
 {
     "name": "parvion/laravel-log-pruner",
+    "version": "1.0.0",
     "description": "A robust Laravel package for atomic log rotation, dynamic database table pruning, queue worker restart, and multi-recipient email reporting.",
     "keywords": [
         "laravel",
@@ -22,11 +23,11 @@
     ],
     "require": {
         "php": "^8.0",
-        "illuminate/console": "^10.0|^11.0|^12.0",
-        "illuminate/support": "^10.0|^11.0|^12.0",
-        "illuminate/database": "^10.0|^11.0|^12.0",
-        "illuminate/mail": "^10.0|^11.0|^12.0",
-        "illuminate/validation": "^10.0|^11.0|^12.0"
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/mail": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/validation": "^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0"

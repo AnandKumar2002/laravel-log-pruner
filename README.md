@@ -1,7 +1,7 @@
 # Parvion Laravel Log Pruner
 
 [![PHP Version](https://img.shields.io/badge/php-%5E8.0-8892BF)](https://php.net)
-[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/laravel-10%20%7C%2011%20%7C%2012%20%7C%2013-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
 [![Changelog](https://img.shields.io/badge/changelog-CHANGELOG.md-0ea5e9)](CHANGELOG.md)
 [![Contributing](https://img.shields.io/badge/contributing-CONTRIBUTING.md-f59e0b)](CONTRIBUTING.md)
@@ -33,17 +33,17 @@
 
 ## Features
 
-| Feature | Details |
-|---|---|
-| 🔄 **Atomic log rotation** | Uses OS-level `rename()` — zero window where log is missing |
-| 📋 **Backup info table** | Shows every backup: size, age, expiry date, and SAFE/EXPIRED status |
-| 🗑️ **Backup file pruning** | Auto-deletes backups older than your configured retention period |
-| 🔧 **Queue worker restart** | Gracefully signals workers to release old file handles |
-| 🗃️ **Dynamic DB pruning** | Safely prunes any database table with schema existence checks |
+| Feature                     | Details                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| 🔄 **Atomic log rotation**   | Uses OS-level `rename()` — zero window where log is missing                   |
+| 📋 **Backup info table**     | Shows every backup: size, age, expiry date, and SAFE/EXPIRED status           |
+| 🗑️ **Backup file pruning**   | Auto-deletes backups older than your configured retention period              |
+| 🔧 **Queue worker restart**  | Gracefully signals workers to release old file handles                        |
+| 🗃️ **Dynamic DB pruning**    | Safely prunes any database table with schema existence checks                 |
 | 📧 **Multi-recipient email** | Plain-text report via `Mail::raw()` — works with ZeptoMail, Postmark, Mailgun |
-| 🛡️ **Schema safety checks** | Verifies table + `created_at` column exist before any DELETE |
-| ⚙️ **Fully config-driven** | Every feature toggled from `config/log-pruner.php` and `.env` |
-| 🎛️ **CLI overrides config** | Pass `--days`, `--tables`, `--email` to override config on the fly |
+| 🛡️ **Schema safety checks**  | Verifies table + `created_at` column exist before any DELETE                  |
+| ⚙️ **Fully config-driven**   | Every feature toggled from `config/log-pruner.php` and `.env`                 |
+| 🎛️ **CLI overrides config**  | Pass `--days`, `--tables`, `--email` to override config on the fly            |
 
 ---
 
@@ -82,11 +82,11 @@ Each phase can be individually enabled or disabled in the config.
 
 ## Requirements
 
-| Dependency | Version |
-|---|---|
-| **PHP** | `^8.0` (8.0, 8.1, 8.2, 8.3+) |
-| **Laravel** | `10.x`, `11.x`, `12.x` |
-| **Carbon** | Included with Laravel |
+| Dependency  | Version                      |
+| ----------- | ---------------------------- |
+| **PHP**     | `^8.0` (8.0, 8.1, 8.2, 8.3+) |
+| **Laravel** | `10.x`, `11.x`, `12.x`, `13.x` |
+| **Carbon**  | Included with Laravel        |
 
 ---
 
@@ -460,15 +460,15 @@ LOG_PRUNER_MAIL_SUBJECT_PREFIX=[Log Pruner]
 
 ## Disabling Features
 
-| What you want to stop | `.env` setting |
-|---|---|
-| Stop everything (maintenance) | `LOG_PRUNER_ENABLED=false` |
-| Stop rotating the log file | `LOG_PRUNER_FEATURE_ROTATION=false` |
+| What you want to stop          | `.env` setting                            |
+| ------------------------------ | ----------------------------------------- |
+| Stop everything (maintenance)  | `LOG_PRUNER_ENABLED=false`                |
+| Stop rotating the log file     | `LOG_PRUNER_FEATURE_ROTATION=false`       |
 | Stop deleting old backup files | `LOG_PRUNER_FEATURE_BACKUP_PRUNING=false` |
-| Skip queue worker restart | `LOG_PRUNER_FEATURE_QUEUE_RESTART=false` |
-| Stop deleting old DB rows | `LOG_PRUNER_FEATURE_DB_PRUNING=false` |
-| Stop sending email reports | `LOG_PRUNER_MAIL_ENABLED=false` |
-| Disable email feature entirely | `LOG_PRUNER_FEATURE_EMAIL=false` |
+| Skip queue worker restart      | `LOG_PRUNER_FEATURE_QUEUE_RESTART=false`  |
+| Stop deleting old DB rows      | `LOG_PRUNER_FEATURE_DB_PRUNING=false`     |
+| Stop sending email reports     | `LOG_PRUNER_MAIL_ENABLED=false`           |
+| Disable email feature entirely | `LOG_PRUNER_FEATURE_EMAIL=false`          |
 
 ---
 
@@ -477,15 +477,15 @@ LOG_PRUNER_MAIL_SUBJECT_PREFIX=[Log Pruner]
 The package uses `Mail::raw()` which works with **any** mail driver — no Blade
 templates are required:
 
-| Driver | Compatible |
-|---|---|
-| SMTP | ✅ |
-| ZeptoMail | ✅ |
-| Mailgun | ✅ |
-| Postmark | ✅ |
-| Resend | ✅ |
-| Amazon SES | ✅ |
-| Log (local dev) | ✅ |
+| Driver          | Compatible |
+| --------------- | ---------- |
+| SMTP            | ✅          |
+| ZeptoMail       | ✅          |
+| Mailgun         | ✅          |
+| Postmark        | ✅          |
+| Resend          | ✅          |
+| Amazon SES      | ✅          |
+| Log (local dev) | ✅          |
 
 ---
 

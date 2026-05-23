@@ -36,7 +36,7 @@ and the format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.
 
 **Package:** `parvion/laravel-log-pruner`  
 **Author:** Anand Kumar (Parvion)  
-**PHP:** `^8.0` | **Laravel:** `10.x`, `11.x`, `12.x`
+**PHP:** `^8.0` | **Laravel:** `10.x`, `11.x`, `12.x`, `13.x`
 
 #### Added
 
