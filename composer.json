@@ -1,0 +1,16 @@
+{
+    "name": "parvion/laravel-log-pruner",
+    "description": "A robust Laravel package for atomic log rotation, dynamic database pruning, and email reporting.",
+    "autoload": {
+        "psr-4": {
+            "Parvion\\LaravelLogPruner\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Anand Kumar",
+            "email": "anandkumar101002@gmail.com"
+        }
+    ],
+    "require": {}
+}
