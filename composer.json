@@ -1,16 +1,56 @@
 {
     "name": "parvion/laravel-log-pruner",
-    "description": "A robust Laravel package for atomic log rotation, dynamic database pruning, and email reporting.",
+    "description": "A robust Laravel package for atomic log rotation, dynamic database table pruning, queue worker restart, and multi-recipient email reporting.",
+    "keywords": [
+        "laravel",
+        "log",
+        "pruner",
+        "rotation",
+        "backup",
+        "database",
+        "cleanup",
+        "artisan"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Anand Kumar",
+            "email": "anandkumar101002@gmail.com",
+            "role": "Creator"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/console": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/database": "^10.0|^11.0|^12.0",
+        "illuminate/mail": "^10.0|^11.0|^12.0",
+        "illuminate/validation": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0"
+    },
     "autoload": {
         "psr-4": {
             "Parvion\\LaravelLogPruner\\": "src/"
         }
     },
-    "authors": [
-        {
-            "name": "Anand Kumar",
-            "email": "anandkumar101002@gmail.com"
+    "autoload-dev": {
+        "psr-4": {
+            "Parvion\\LaravelLogPruner\\Tests\\": "tests/"
         }
-    ],
-    "require": {}
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Parvion\\LaravelLogPruner\\LogPrunerServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

@@ -1,2 +1,7 @@
-/vendor
-/composer.lock
+vendor/
+composer.lock
+.phpunit.result.cache
+.env
+*.swp
+.DS_Store
+Thumbs.db
