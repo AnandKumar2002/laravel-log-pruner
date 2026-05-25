@@ -1,5 +1,6 @@
 {
     "name": "parvion/laravel-log-pruner",
+    "version": "1.0.0",
     "description": "A robust Laravel package for atomic log rotation, dynamic database table pruning, queue worker restart, and multi-recipient email reporting.",
     "keywords": [
         "laravel",

@@ -7,10 +7,7 @@
 [![Contributing](https://img.shields.io/badge/contributing-CONTRIBUTING.md-f59e0b)](CONTRIBUTING.md)
 [![Artisan Command](https://img.shields.io/badge/artisan-logs%3Arotate--and--prune-6366f1)](https://laravel.com/docs/artisan)
 
-> A zero-dependency, enterprise-ready Laravel package that atomically rotates
-> your log file, prunes old backups and database rows, restarts queue workers,
-> and emails a detailed report — all from one Artisan command, fully controlled
-> from your `config/log-pruner.php` and `.env`.
+> A robust, enterprise-ready Laravel package for atomic log rotation, dynamic database table pruning, queue worker restart, and multi-recipient email reporting — all from one Artisan command, fully controlled from your `config/log-pruner.php` and `.env`.
 
 ---
 
@@ -94,32 +91,6 @@ Each phase can be individually enabled or disabled in the config.
 
 ### Step 1 — Add the package
 
-**Option A — Local development (path repository)**
-
-Add to your **Laravel app's** `composer.json`:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../laravel-log-pruner"
-        }
-    ],
-    "require": {
-        "parvion/laravel-log-pruner": "*"
-    }
-}
-```
-
-Then run:
-
-```bash
-composer require parvion/laravel-log-pruner
-```
-
-**Option B — From Packagist (once published)**
-
 ```bash
 composer require parvion/laravel-log-pruner
 ```
@@ -148,8 +119,8 @@ Open your `.env` and add:
 # How many days to keep backup files and DB rows
 LOG_PRUNER_DAYS=15
 
-# Tables to prune (comma-separated)
-LOG_PRUNER_TABLES=system_logs,audit_logs
+# Tables to prune (comma-separated, supports custom days via table:days)
+LOG_PRUNER_TABLES=system_logs:10,audit_logs
 
 # Email recipients for the report (comma-separated)
 LOG_PRUNER_MAIL_ENABLED=true
@@ -198,8 +169,11 @@ return [
         'email_report'   => env('LOG_PRUNER_FEATURE_EMAIL',          true),
     ],
 
-    // ── Tables to DELETE old rows from ────────────────────────────────────
-    'tables' => explode(',', env('LOG_PRUNER_TABLES', 'system_logs')),
+    // ── Tables to DELETE old rows from (with custom retention) ────────────
+    'tables' => [
+        'system_logs' => 10,   // Keeps system logs for 10 days
+        'audit_logs',          // Keeps audit logs for global retention (15 days)
+    ],
 
     // ── Backup file display settings ──────────────────────────────────────
     'backup' => [
@@ -238,8 +212,11 @@ php artisan logs:rotate-and-prune --days=30
 ### Override which tables to prune
 
 ```bash
-# Prune three tables in one run
-php artisan logs:rotate-and-prune --tables=system_logs,audit_logs,api_request_logs
+# Prune with global retention days
+php artisan logs:rotate-and-prune --tables=system_logs,audit_logs
+
+# Prune with custom, table-specific retention days (table:days format)
+php artisan logs:rotate-and-prune --tables=system_logs:10,audit_logs:30
 ```
 
 ### Override email recipients
@@ -351,7 +328,7 @@ Add this to your server (`crontab -e`) — this is the **only** cron entry you n
 
   Retention Period : 15 days
   Cutoff Date      : 2026-05-08 02:00:05 IST
-  Tables           : system_logs, audit_logs
+  Tables           : system_logs (10 days), audit_logs (global)
   Recipients       : admin@myapp.com, devops@myapp.com
 
 ---------------------------------------------------------
@@ -393,8 +370,8 @@ Add this to your server (`crontab -e`) — this is the **only** cron entry you n
   DATABASE TABLE PRUNING
 ---------------------------------------------------------
 
-  • `system_logs`                  142 rows deleted
-  • `audit_logs`                    87 rows deleted
+  • `system_logs`                  142 rows deleted (retention: 10 days)
+  • `audit_logs`                    87 rows deleted (retention: 15 days)
 
 ---------------------------------------------------------
   This is an automated message from the Log Pruner.
@@ -420,6 +397,12 @@ When `LOG_PRUNER_BACKUP_SHOW_INFO=true`, Phase 2 prints this in the console:
   ────────────────────────────────────────────────────────────────────────────────
 ```
 
+> [!IMPORTANT]
+> **Important Note on Backup File Deletion (Metadata vs. Filename)**
+> This package calculates a backup file's age based on the operating system's **Last Modified Date** (`filemtime`) metadata, not the date printed in the filename.
+>
+> If you open an older backup log in a text editor and accidentally save it, your OS will instantly update its "Last Modified" date to today. This will reset its retention countdown back to 0 days, and the package will mark it as `SAFE` until your configured `--days` threshold passes again.
+
 ---
 
 ## .env Quick Reference
@@ -442,8 +425,8 @@ LOG_PRUNER_FEATURE_QUEUE_RESTART=true    # Phase 3 — graceful queue:restart
 LOG_PRUNER_FEATURE_DB_PRUNING=true       # Phase 4 — delete old DB rows
 LOG_PRUNER_FEATURE_EMAIL=true            # Phase 5 — send email report
 
-# ── Database Tables ───────────────────────────────────────────
-LOG_PRUNER_TABLES=system_logs,audit_logs,api_request_logs
+# ── Database Tables (supports table:days format) ──────────────
+LOG_PRUNER_TABLES=system_logs:10,audit_logs:30,api_request_logs
 
 # ── Backup Info Display ───────────────────────────────────────
 LOG_PRUNER_BACKUP_SHOW_INFO=true         # Show table in console

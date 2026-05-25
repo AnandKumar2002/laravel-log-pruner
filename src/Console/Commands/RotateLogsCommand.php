@@ -244,18 +244,22 @@ class RotateLogsCommand extends Command
 
         // CLI always wins — it replaces everything else for this run.
         if ($cliValue !== null && $cliValue !== '') {
-            return $this->splitAndClean($cliValue);
+            return $this->parseTables($cliValue);
         }
 
         // Merge the config PHP array with any env-string supplement.
-        $fromConfig = (array) config('log-pruner.tables', []);
-        $fromEnv    = $this->splitAndClean((string) env('LOG_PRUNER_TABLES', ''));
+        $fromConfig = $this->parseTables((array) config('log-pruner.tables', []));
+        $fromEnv    = $this->parseTables((string) env('LOG_PRUNER_TABLES', ''));
 
-        // array_unique removes duplicates if the same table appears in both.
-        return array_values(array_unique(array_filter(
-            array_merge($fromConfig, $fromEnv),
-            fn (string $t): bool => $t !== ''
-        )));
+        $merged = $fromConfig;
+        foreach ($fromEnv as $table => $days) {
+            // Env overrides or supplements config. If env specifies specific days, it overrides.
+            if (! isset($merged[$table]) || $days !== null) {
+                $merged[$table] = $days;
+            }
+        }
+
+        return $merged;
     }
 
     /**
@@ -313,6 +317,72 @@ class RotateLogsCommand extends Command
         ));
     }
 
+    /**
+     * Parses a raw array or string of tables into an associative array [table_name => ?int].
+     * Supports formats:
+     *   - Associative: ['system_logs' => 10]
+     *   - String with colon: "system_logs:10"
+     *   - String with arrow: "system_logs => 10" or "system_logs=>10"
+     *   - Flat string: "system_logs" (uses global retention days)
+     *
+     * @param  array|string  $input  Raw tables input.
+     * @return array<string, ?int>  Associative array of table => days.
+     */
+    private function parseTables(array|string $input): array
+    {
+        $parsed = [];
+
+        if (is_string($input)) {
+            $items = array_map('trim', explode(',', $input));
+        } else {
+            $items = $input;
+        }
+
+        foreach ($items as $key => $val) {
+            // Case 1: Associative array where key is the table name and val is the integer days.
+            // e.g. ['system_logs' => 10]
+            if (is_string($key) && (is_int($val) || is_numeric($val))) {
+                $tableName = trim($key);
+                if ($tableName !== '') {
+                    $parsed[$tableName] = (int) $val;
+                }
+                continue;
+            }
+
+            // Case 2: The value itself is a string. It could be "table_name", "table_name:days", or "table_name=>days".
+            if (is_string($val)) {
+                $val = trim($val);
+                if ($val === '') {
+                    continue;
+                }
+
+                // Check if it has a separator: "=>" or ":" or "="
+                $separator = null;
+                if (str_contains($val, '=>')) {
+                    $separator = '=>';
+                } elseif (str_contains($val, ':')) {
+                    $separator = ':';
+                } elseif (str_contains($val, '=')) {
+                    $separator = '=';
+                }
+
+                if ($separator !== null) {
+                    $parts = explode($separator, $val, 2);
+                    $tableName = trim($parts[0]);
+                    $days = trim($parts[1]);
+
+                    if ($tableName !== '') {
+                        $parsed[$tableName] = is_numeric($days) ? (int) $days : null;
+                    }
+                } else {
+                    $parsed[$val] = null;
+                }
+            }
+        }
+
+        return $parsed;
+    }
+
     // =========================================================================
     // Console Output Helpers
     // =========================================================================
@@ -336,7 +406,7 @@ class RotateLogsCommand extends Command
     private function printConfigSummary(): void
     {
         $cutoffDate    = Carbon::now()->subDays($this->retentionDays)->format('Y-m-d H:i T');
-        $tablesStr     = empty($this->tables) ? '(none)' : implode(', ', $this->tables);
+        $tablesStr     = $this->formatTablesList();
         $recipientsStr = empty($this->recipients) ? '(none)' : implode(', ', $this->recipients);
 
         $featureMap = [
@@ -589,10 +659,10 @@ class RotateLogsCommand extends Command
                 return true;
             }
 
-            $cutoffDate = Carbon::now()->subDays($this->retentionDays)->toDateTimeString();
-
-            foreach ($this->tables as $table) {
-                $this->pruneTable($table, $cutoffDate);
+            foreach ($this->tables as $table => $days) {
+                $daysToKeep = $days ?? $this->retentionDays;
+                $cutoffDate = Carbon::now()->subDays($daysToKeep)->toDateTimeString();
+                $this->pruneTable($table, $cutoffDate, $daysToKeep);
             }
 
             return true;
@@ -604,22 +674,23 @@ class RotateLogsCommand extends Command
      *
      * @param string $table       Database table name.
      * @param string $cutoffDate  ISO 8601 datetime string — rows older than this are deleted.
+     * @param int    $daysToKeep  Number of retention days for this table.
      */
-    private function pruneTable(string $table, string $cutoffDate): void
+    private function pruneTable(string $table, string $cutoffDate, int $daysToKeep): void
     {
-        $this->components->info("  Processing table: `{$table}`");
+        $this->components->info("  Processing table: `{$table}` (retention: {$daysToKeep} days)");
 
         // Safety Check 1 — Table must exist.
         if (! Schema::hasTable($table)) {
             $this->components->warn("    ⚠ Skipping `{$table}` — table does not exist.");
-            $this->prunedTableStats[$table] = 0;
+            $this->prunedTableStats[$table] = ['rows' => 0, 'days' => $daysToKeep];
             return;
         }
 
         // Safety Check 2 — Table must have `created_at` column.
         if (! Schema::hasColumn($table, 'created_at')) {
             $this->components->warn("    ⚠ Skipping `{$table}` — no `created_at` column found.");
-            $this->prunedTableStats[$table] = 0;
+            $this->prunedTableStats[$table] = ['rows' => 0, 'days' => $daysToKeep];
             return;
         }
 
@@ -628,11 +699,11 @@ class RotateLogsCommand extends Command
                 ->where('created_at', '<', $cutoffDate)
                 ->delete();
 
-            $this->prunedTableStats[$table] = $deletedRows;
+            $this->prunedTableStats[$table] = ['rows' => $deletedRows, 'days' => $daysToKeep];
             $this->components->info("    ✓ Deleted {$deletedRows} rows from `{$table}`");
         } catch (\Throwable $e) {
             $this->components->error("    ✗ Failed to prune `{$table}`: " . $e->getMessage());
-            $this->prunedTableStats[$table] = 0;
+            $this->prunedTableStats[$table] = ['rows' => 0, 'days' => $daysToKeep];
         }
     }
 
@@ -760,8 +831,10 @@ class RotateLogsCommand extends Command
         if (empty($this->prunedTableStats)) {
             $tableLines[] = '  No tables were processed.';
         } else {
-            foreach ($this->prunedTableStats as $table => $rows) {
-                $tableLines[] = sprintf('  • %-30s %d rows deleted', "`{$table}`", $rows);
+            foreach ($this->prunedTableStats as $table => $stat) {
+                $rows = is_array($stat) ? ($stat['rows'] ?? 0) : (int) $stat;
+                $retention = is_array($stat) ? ($stat['days'] ?? $this->retentionDays) : $this->retentionDays;
+                $tableLines[] = sprintf('  • %-30s %d rows deleted (retention: %d days)', "`{$table}`", $rows, $retention);
             }
         }
         $tableSection = implode(PHP_EOL, $tableLines);
@@ -882,7 +955,20 @@ REPORT;
      */
     private function formatTablesList(): string
     {
-        return empty($this->tables) ? '(none)' : implode(', ', $this->tables);
+        if (empty($this->tables)) {
+            return '(none)';
+        }
+
+        $formatted = [];
+        foreach ($this->tables as $table => $days) {
+            if ($days !== null) {
+                $formatted[] = "{$table} ({$days} days)";
+            } else {
+                $formatted[] = "{$table} (global)";
+            }
+        }
+
+        return implode(', ', $formatted);
     }
 
     /**

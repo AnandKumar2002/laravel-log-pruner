@@ -18,15 +18,13 @@ and the format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.
 ## [Unreleased]
 
 ### Added
-- **`mail.header`** config key (`LOG_PRUNER_MAIL_HEADER`) — customise the
-  title banner printed at the top of every email body.
-- **`mail.footer`** config key (`LOG_PRUNER_MAIL_FOOTER`) — customise the
-  sign-off / disclaimer line at the bottom of every email.
-- **`mail.from.address`** config key (`LOG_PRUNER_MAIL_FROM_ADDRESS`) — override
-  the From: sender address per-package without touching `MAIL_FROM_ADDRESS`.
-- **`mail.from.name`** config key (`LOG_PRUNER_MAIL_FROM_NAME`) — override the
-  From: display name shown to recipients.
-- Email border/divider lines now auto-scale to match the width of the custom header.
+- **Table-Specific Retention Periods** in Phase 4 — you can now define different retention days per database table in the `tables` config array (e.g. `'system_logs' => 10`) or via CLI/env string (e.g. `--tables=system_logs:10,audit_logs:30`).
+- Fallback support for flat database tables in config/CLI/env (defaulting to the global retention period).
+- Improved console outputs and email reports to display table-specific retention days next to each processed table.
+- Added an important warning note in the `README.md` explaining how OS file modification dates affect retention calculations.
+
+### Changed
+- Cleaned up `README.md` installation steps by removing the developer-focused local path repository setup and keeping it exclusively in `CONTRIBUTING.md`.
 
 ---
 

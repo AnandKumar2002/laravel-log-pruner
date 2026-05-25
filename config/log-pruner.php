@@ -55,13 +55,29 @@ return [
     |   ✓ The table has a `created_at` column
     | Unrecognised tables are safely skipped — never a fatal error.
     |
-    | CLI override : --tables=system_logs,audit_logs
+    | ── CUSTOM RETENTION DAYS PER TABLE ──────────────────────────────────────
+    | You can now specify different retention periods for different tables!
+    | Just map the table name to the number of days you want to keep:
+    |
+    |   'tables' => [
+    |       'system_logs' => 10,  // Keep system logs for 10 days
+    |       'audit_logs'  => 30,  // Keep audit logs for 30 days
+    |   ],
+    |
+    | If you do not specify days, it falls back to the default 'days' above:
+    |
+    |   'tables' => [
+    |       'system_logs' => 10,  // Keeps system logs for 10 days
+    |       'audit_logs',         // Keeps audit logs for global retention (15 days)
+    |   ],
+    |
+    | CLI overrides support specific days using a colon:
+    |   php artisan logs:rotate-and-prune --tables=system_logs:10,audit_logs:30
     */
     'tables' => [
-        'system_logs',
-        // 'audit_logs',
+        // 'system_logs' => 10,
+        // 'audit_logs'  => 20,
         // 'api_request_logs',
-        // 'activity_logs',
     ],
 
 
